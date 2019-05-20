@@ -29,15 +29,10 @@ using std::endl;
  */
 namespace utils {
     int *mat; // the adjacency matrix
-    int N=5000;
+    int N=25000;
     void abort_with_error_message(string msg) {
         std::cerr << msg << endl;
         abort();
-    }
-
-    //translate 2-dimension coordinate to 1-dimension
-    int convert_dimension_2D_1D(int x, int y, int n) {
-        return x * n + y;
     }
 
     int read_file(string filename) {
@@ -51,8 +46,8 @@ namespace utils {
         mat = (int *) malloc(N * N * sizeof(int));
         for (int i = 0; i < N; i++)
             for (int j = 0; j < N; j++) {
-                 mat[i * N + j] = rand()%1000;;
-                // printf("%d ", mat[i*N+j]);
+             mat[i * N + j] = rand()%100;
+                //printf("%d ", mat[i*N+j]);
             }
              //printf("\n");
         return 0;
@@ -91,6 +86,7 @@ void bellman_ford(int p, int n, int *mat, int *dist, bool *has_negative_cycle) {
     omp_set_num_threads(p);
 
     //initialize distances
+    #pragma omp parallel for 
     for (int i = 0; i < n; i++) {
         dist[i] = INF;
     }
@@ -110,23 +106,24 @@ void bellman_ford(int p, int n, int *mat, int *dist, bool *has_negative_cycle) {
     while(!queue.empty() && !*has_negative_cycle){
         int u = queue.front(); queue.pop();
         in_queue[u] = false;
-#pragma omp parallel for
+        //#pragma omp parallel for schedule(static)
             for (int v = 0; v < n; v++) {
+                //printf("u : %d | v : %d\n",u,v);
                 int weight = mat[u * n + v];
                 if (weight < INF) {
                     int new_dist = weight + dist[u];
                     if (new_dist < dist[v]) {
-                        dist[v] = new_dist;
-                        enqueue_counter[v]++;
+                 
+                            dist[v] = new_dist;
+                            enqueue_counter[v]++;
                         if (in_queue[v] == false) {
                             in_queue[v] = true;
                             if (enqueue_counter[v] >= n) {
                                 *has_negative_cycle = true;
                             }
-#pragma omp critical
-                            {
-                               queue.push(v);
-                            }
+                        //        #pragma omp critical
+                               {queue.push(v);}
+                            
                         }
                     }
                 }

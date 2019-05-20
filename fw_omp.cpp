@@ -5,7 +5,7 @@
 #include <stdlib.h>
 #include "omp.h"
 // Number of vertices in the graph 
-#define V  100
+#define V  1000
   
 /* Define Infinite as a large enough value. This value will be used 
   for vertices not connected to each other */
@@ -40,7 +40,7 @@ void floydWarshall (int graph[][V])
       ----> After the end of an iteration, vertex no. k is added to the set of 
       intermediate vertices and the set becomes {0, 1, 2, .. k} */
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(auto) 
     for (k = 0; k < V; k++) 
     { 
         // Pick all vertices as source one by one
@@ -49,19 +49,24 @@ void floydWarshall (int graph[][V])
         { 
             // Pick all vertices as destination for the 
             // above picked source   
-            #pragma omp parallel for 
+            //printf("Thread ID : (%d)\n",omp_get_thread_num());
+            #pragma omp parallel for
             for (j = 0; j < V; j++) 
             { 
                 // If vertex k is on the shortest path from 
                 // i to j, then update the value of dist[i][j] 
-                if (dist[i][k] + dist[k][j] < dist[i][j]) 
-                    dist[i][j] = dist[i][k] + dist[k][j]; 
+                //printf("%d,%d + %d,%d => %d,%d  (%d)\n",i,k,k,j,i,j);
+                if (dist[i][k] + dist[k][j] < dist[i][j])
+                    # pragma omp critical
+                    {
+                        dist[i][j] = dist[i][k] + dist[k][j];
+                    } 
             } 
         } 
     } 
   
     // Print the shortest distance matrix 
-   // printSolution(dist); 
+    // printSolution(dist); 
 } 
   
 /* A utility function to print solution */
@@ -83,7 +88,7 @@ void printSolution(int dist[][V])
 } 
 
 void generateMatrix(int graph[][V]){
-        printf ("Generate mattix\n");
+       // printf ("Generate mattix\n");
         for(int i = 0;i < V;i++){
             for(int j = 0 ;j < V;j++){
                 if(j<=i){
@@ -123,7 +128,7 @@ int main()
 
     gettimeofday(&end, NULL);
     double delta = ((end.tv_sec  - start.tv_sec) * 1000000u + 
-    end.tv_usec - start.tv_usec) / 1.e6;
+    end.tv_usec - start.tv_usec) / 1;
     printf("time : %lf \n",delta); 
 
     return 0; 

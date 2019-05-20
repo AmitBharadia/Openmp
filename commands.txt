@@ -1,0 +1,3 @@
+Mac:
+g++-8 -std=c++11 -fopenmp -L/usr/local/lib fw_omp.cpp -o fw_omp
+./fw_omp > output/fw_omp.txt
